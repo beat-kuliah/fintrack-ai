@@ -1,0 +1,5 @@
+/home/beatfraps/Documents/fintrack/Cursor/backend/target/debug/deps/darling_macro-bbdac7cfb1b8f382.d: /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/darling_macro-0.20.11/src/lib.rs
+
+/home/beatfraps/Documents/fintrack/Cursor/backend/target/debug/deps/libdarling_macro-bbdac7cfb1b8f382.so: /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/darling_macro-0.20.11/src/lib.rs
+
+/home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/darling_macro-0.20.11/src/lib.rs:

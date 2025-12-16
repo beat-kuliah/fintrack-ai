@@ -1,0 +1,14 @@
+/home/beatfraps/Documents/fintrack/Cursor/backend/target/debug/deps/thiserror-9562a625a0671259.d: /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/lib.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/aserror.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/display.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/var.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/private.rs /home/beatfraps/Documents/fintrack/Cursor/backend/target/debug/build/thiserror-39703cb548946dbc/out/private.rs
+
+/home/beatfraps/Documents/fintrack/Cursor/backend/target/debug/deps/libthiserror-9562a625a0671259.rlib: /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/lib.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/aserror.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/display.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/var.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/private.rs /home/beatfraps/Documents/fintrack/Cursor/backend/target/debug/build/thiserror-39703cb548946dbc/out/private.rs
+
+/home/beatfraps/Documents/fintrack/Cursor/backend/target/debug/deps/libthiserror-9562a625a0671259.rmeta: /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/lib.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/aserror.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/display.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/var.rs /home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/private.rs /home/beatfraps/Documents/fintrack/Cursor/backend/target/debug/build/thiserror-39703cb548946dbc/out/private.rs
+
+/home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/lib.rs:
+/home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/aserror.rs:
+/home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/display.rs:
+/home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/var.rs:
+/home/beatfraps/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.17/src/private.rs:
+/home/beatfraps/Documents/fintrack/Cursor/backend/target/debug/build/thiserror-39703cb548946dbc/out/private.rs:
+
+# env-dep:OUT_DIR=/home/beatfraps/Documents/fintrack/Cursor/backend/target/debug/build/thiserror-39703cb548946dbc/out
