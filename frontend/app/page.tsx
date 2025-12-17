@@ -1,10 +1,21 @@
 'use client'
 
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Wallet, ArrowRight, Sparkles, TrendingUp, Shield, Zap } from 'lucide-react'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function HomePage() {
+  const { isAuthenticated, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, loading, router])
   return (
     <div className="min-h-screen bg-white dark:bg-dark-950 bg-mesh noise transition-colors duration-300">
       {/* Navigation - Compact on mobile */}

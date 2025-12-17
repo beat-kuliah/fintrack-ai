@@ -1,23 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, Lock, User, Rocket, Check, X } from 'lucide-react'
 import AuthLayout from '@/components/layout/AuthLayout'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import { apiClient } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { isAuthenticated, loading: authLoading, login } = useAuth()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, authLoading, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -40,6 +50,16 @@ export default function RegisterPage() {
       newErrors.name = 'Nama wajib diisi'
     } else if (formData.name.length < 2) {
       newErrors.name = 'Nama minimal 2 karakter'
+    }
+
+    if (!formData.username) {
+      newErrors.username = 'Username wajib diisi'
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Username minimal 3 karakter'
+    } else if (formData.username.length > 30) {
+      newErrors.username = 'Username maksimal 30 karakter'
+    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+      newErrors.username = 'Username hanya boleh mengandung huruf, angka, dan underscore'
     }
 
     if (!formData.email) {
@@ -78,9 +98,36 @@ export default function RegisterPage() {
     if (!validateForm()) return
 
     setLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    console.log('Register attempt:', formData)
-    setLoading(false)
+    try {
+      const response = await apiClient.register({
+        name: formData.name,
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      })
+      
+      // Store token and update auth context
+      login(response.token, response.user)
+      
+      // Redirect to dashboard
+      router.push('/dashboard')
+      router.refresh()
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.error || 'Terjadi kesalahan saat registrasi'
+      
+      // Set appropriate field error
+      if (errorMessage.includes('username') || errorMessage.includes('Username') || errorMessage.includes('digunakan')) {
+        setErrors({ username: errorMessage })
+      } else if (errorMessage.includes('email') || errorMessage.includes('Email') || errorMessage.includes('terdaftar')) {
+        setErrors({ email: errorMessage })
+      } else if (errorMessage.includes('password') || errorMessage.includes('Password')) {
+        setErrors({ password: errorMessage })
+      } else {
+        setErrors({ email: errorMessage })
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -98,6 +145,18 @@ export default function RegisterPage() {
           value={formData.name}
           onChange={handleChange}
           error={errors.name}
+          icon={<User size={20} />}
+          required
+        />
+
+        <Input
+          label="Username"
+          type="text"
+          name="username"
+          placeholder="username_lo"
+          value={formData.username}
+          onChange={handleChange}
+          error={errors.username}
           icon={<User size={20} />}
           required
         />

@@ -1,20 +1,44 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, Lock, Sparkles } from 'lucide-react'
 import AuthLayout from '@/components/layout/AuthLayout'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import { apiClient } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { isAuthenticated, loading: authLoading, login } = useAuth()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    email: '',
+    username_or_email: '',
     password: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, authLoading, router])
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-dark-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p className="text-light-600 dark:text-dark-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isAuthenticated) {
+    return null
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -27,10 +51,8 @@ export default function LoginPage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
     
-    if (!formData.email) {
-      newErrors.email = 'Email wajib diisi'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Format email tidak valid'
+    if (!formData.username_or_email) {
+      newErrors.username_or_email = 'Username atau email wajib diisi'
     }
     
     if (!formData.password) {
@@ -49,9 +71,27 @@ export default function LoginPage() {
     if (!validateForm()) return
 
     setLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    console.log('Login attempt:', formData)
-    setLoading(false)
+    try {
+      const response = await apiClient.login({
+        username_or_email: formData.username_or_email,
+        password: formData.password,
+      })
+      
+      // Store token and update auth context
+      login(response.token, response.user)
+      
+      // Redirect to dashboard
+      router.push('/dashboard')
+      router.refresh()
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.error || 'Terjadi kesalahan saat login'
+      setErrors({ 
+        username_or_email: errorMessage.includes('username') || errorMessage.includes('email') || errorMessage.includes('Email') || errorMessage.includes('kredensial') || errorMessage.includes('credentials') ? errorMessage : '',
+        password: errorMessage.includes('password') || errorMessage.includes('Password') ? errorMessage : ''
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -62,13 +102,13 @@ export default function LoginPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         <Input
-          label="Email"
-          type="email"
-          name="email"
-          placeholder="email@example.com"
-          value={formData.email}
+          label="Username atau Email"
+          type="text"
+          name="username_or_email"
+          placeholder="username atau email@example.com"
+          value={formData.username_or_email}
           onChange={handleChange}
-          error={errors.email}
+          error={errors.username_or_email}
           icon={<Mail size={20} />}
           required
         />

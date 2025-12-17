@@ -27,18 +27,23 @@ pub async fn register(
         return Err(AppError::Conflict("Email sudah terdaftar".to_string()));
     }
 
+    if db::find_user_by_username(&state.db, &payload.username).await?.is_some() {
+        return Err(AppError::Conflict("Username sudah digunakan".to_string()));
+    }
+
     let password_hash = hash_password(&payload.password)?;
     let user_id = Uuid::new_v4();
     
     let user = sqlx::query_as::<_, User>(
         r#"
-        INSERT INTO users (id, email, name, password_hash)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, email, name, password_hash, created_at, updated_at
+        INSERT INTO users (id, email, username, name, password_hash)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, email, username, name, password_hash, created_at, updated_at
         "#
     )
     .bind(user_id)
     .bind(&payload.email)
+    .bind(&payload.username)
     .bind(&payload.name)
     .bind(&password_hash)
     .fetch_one(&state.db)
@@ -65,7 +70,7 @@ pub async fn login(
         AppError::ValidationError(e.to_string())
     })?;
 
-    let user = db::find_user_by_email(&state.db, &payload.email)
+    let user = db::find_user_by_username_or_email(&state.db, &payload.username_or_email)
         .await?
         .ok_or(AppError::InvalidCredentials)?;
 

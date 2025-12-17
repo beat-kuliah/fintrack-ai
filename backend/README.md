@@ -40,7 +40,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
 # Server
 HOST=127.0.0.1
-PORT=8080
+PORT=7000
 
 # Logging
 RUST_LOG=debug
@@ -66,7 +66,7 @@ cargo run
 cargo run --release
 ```
 
-Server akan berjalan di `http://localhost:8080`
+Server akan berjalan di `http://localhost:7000`
 
 ## API Endpoints
 
@@ -128,7 +128,7 @@ GET /api/dashboard/by-category  - Pengeluaran per kategori bulan ini
 
 ### Register
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:7000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "John Doe",
@@ -139,7 +139,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 
 ### Login
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:7000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com",
@@ -149,7 +149,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 
 ### Create Transaction (with auth)
 ```bash
-curl -X POST http://localhost:8080/api/transactions \
+curl -X POST http://localhost:7000/api/transactions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{

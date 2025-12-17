@@ -47,6 +47,14 @@ async fn main() {
 
     tracing::info!("✅ Database connected successfully");
 
+    // Run migrations automatically
+    tracing::info!("🔄 Running database migrations...");
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .expect("Failed to run migrations");
+    tracing::info!("✅ Migrations completed successfully");
+
     // Create app state
     let state = AppState {
         db: pool,

@@ -12,16 +12,34 @@ use crate::models::category::Category;
 // User queries
 pub async fn find_user_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, sqlx::Error> {
     sqlx::query_as::<_, User>(
-        r#"SELECT id, email, name, password_hash, created_at, updated_at FROM users WHERE email = $1"#
+        r#"SELECT id, email, username, name, password_hash, created_at, updated_at FROM users WHERE email = $1"#
     )
     .bind(email)
     .fetch_optional(pool)
     .await
 }
 
+pub async fn find_user_by_username(pool: &PgPool, username: &str) -> Result<Option<User>, sqlx::Error> {
+    sqlx::query_as::<_, User>(
+        r#"SELECT id, email, username, name, password_hash, created_at, updated_at FROM users WHERE username = $1"#
+    )
+    .bind(username)
+    .fetch_optional(pool)
+    .await
+}
+
+pub async fn find_user_by_username_or_email(pool: &PgPool, username_or_email: &str) -> Result<Option<User>, sqlx::Error> {
+    sqlx::query_as::<_, User>(
+        r#"SELECT id, email, username, name, password_hash, created_at, updated_at FROM users WHERE username = $1 OR email = $1"#
+    )
+    .bind(username_or_email)
+    .fetch_optional(pool)
+    .await
+}
+
 pub async fn find_user_by_id(pool: &PgPool, id: Uuid) -> Result<Option<User>, sqlx::Error> {
     sqlx::query_as::<_, User>(
-        r#"SELECT id, email, name, password_hash, created_at, updated_at FROM users WHERE id = $1"#
+        r#"SELECT id, email, username, name, password_hash, created_at, updated_at FROM users WHERE id = $1"#
     )
     .bind(id)
     .fetch_optional(pool)
