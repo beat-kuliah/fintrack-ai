@@ -64,7 +64,10 @@ pub async fn list_transactions(
     .fetch_all(&state.db)
     .await?;
 
-    let response: Vec<TransactionResponse> = transactions.into_iter().map(TransactionResponse::from).collect();
+    let mut response = Vec::new();
+    for tx in transactions {
+        response.push(TransactionResponse::from_with_category(tx, &state.db).await?);
+    }
 
     let total: (i64,) = sqlx::query_as(
         r#"SELECT COUNT(*) FROM transactions WHERE user_id = $1"#
@@ -98,6 +101,95 @@ pub async fn create_transaction(
     let tx_id = Uuid::new_v4();
     let date = payload.date.unwrap_or_else(|| Utc::now().date_naive());
 
+    // Get or create default wallet if wallet_id is not provided
+    let wallet_id = if let Some(w_id) = payload.wallet_id {
+        // Verify wallet belongs to user
+        let wallet_exists: bool = sqlx::query_scalar(
+            r#"SELECT EXISTS(SELECT 1 FROM wallets WHERE id = $1 AND user_id = $2)"#
+        )
+        .bind(w_id)
+        .bind(user_id)
+        .fetch_one(&state.db)
+        .await?;
+
+        if !wallet_exists {
+            return Err(AppError::NotFound("Wallet".to_string()));
+        }
+        w_id
+    } else {
+        // Get or create default wallet
+        let default_wallet: Option<Uuid> = sqlx::query_scalar(
+            r#"SELECT id FROM wallets WHERE user_id = $1 AND name = 'Default Wallet' LIMIT 1"#
+        )
+        .bind(user_id)
+        .fetch_optional(&state.db)
+        .await?;
+
+        if let Some(w_id) = default_wallet {
+            w_id
+        } else {
+            // Create default wallet
+            let new_wallet_id = Uuid::new_v4();
+            sqlx::query(
+                r#"INSERT INTO wallets (id, user_id, name, wallet_type, balance) VALUES ($1, $2, $3, $4, $5)"#
+            )
+            .bind(new_wallet_id)
+            .bind(user_id)
+            .bind("Default Wallet")
+            .bind("cash")
+            .bind(0.0)
+            .execute(&state.db)
+            .await?;
+            new_wallet_id
+        }
+    };
+
+    // Get or create category
+    let category_id = if let Some(cat_id) = payload.category_id {
+        // Verify category exists
+        let cat_exists: bool = sqlx::query_scalar(
+            r#"SELECT EXISTS(SELECT 1 FROM categories WHERE id = $1 AND (user_id = $2 OR user_id IS NULL))"#
+        )
+        .bind(cat_id)
+        .bind(user_id)
+        .fetch_one(&state.db)
+        .await?;
+
+        if !cat_exists {
+            return Err(AppError::NotFound("Category".to_string()));
+        }
+        Some(cat_id)
+    } else if let Some(ref cat_name) = payload.category_name {
+        // Find or create category by name
+        let existing_cat: Option<Uuid> = sqlx::query_scalar(
+            r#"SELECT id FROM categories WHERE name = $1 AND category_type = $2 AND (user_id = $3 OR user_id IS NULL) LIMIT 1"#
+        )
+        .bind(cat_name)
+        .bind(&payload.transaction_type)
+        .bind(user_id)
+        .fetch_optional(&state.db)
+        .await?;
+
+        if let Some(cat_id) = existing_cat {
+            Some(cat_id)
+        } else {
+            // Create new category
+            let new_cat_id = Uuid::new_v4();
+            sqlx::query(
+                r#"INSERT INTO categories (id, user_id, name, category_type) VALUES ($1, $2, $3, $4)"#
+            )
+            .bind(new_cat_id)
+            .bind(user_id)
+            .bind(cat_name)
+            .bind(&payload.transaction_type)
+            .execute(&state.db)
+            .await?;
+            Some(new_cat_id)
+        }
+    } else {
+        None
+    };
+
     let transaction = sqlx::query_as::<_, Transaction>(
         r#"
         INSERT INTO transactions (id, user_id, wallet_id, category_id, transaction_type, amount, description, date)
@@ -107,8 +199,8 @@ pub async fn create_transaction(
     )
     .bind(tx_id)
     .bind(user_id)
-    .bind(payload.wallet_id)
-    .bind(payload.category_id)
+    .bind(wallet_id)
+    .bind(category_id)
     .bind(&payload.transaction_type)
     .bind(payload.amount)
     .bind(&payload.description)
@@ -127,15 +219,17 @@ pub async fn create_transaction(
         r#"UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE id = $2 AND user_id = $3"#
     )
     .bind(balance_change)
-    .bind(payload.wallet_id)
+    .bind(wallet_id)
     .bind(user_id)
     .execute(&state.db)
     .await?;
 
+    let response = TransactionResponse::from_with_category(transaction, &state.db).await?;
+
     Ok(Json(json!({
         "success": true,
         "message": "Transaksi berhasil ditambahkan!",
-        "data": TransactionResponse::from(transaction)
+        "data": response
     })))
 }
 
@@ -158,9 +252,11 @@ pub async fn get_transaction(
     .await?
     .ok_or(AppError::NotFound("Transaction".to_string()))?;
 
+    let response = TransactionResponse::from_with_category(transaction, &state.db).await?;
+
     Ok(Json(json!({
         "success": true,
-        "data": TransactionResponse::from(transaction)
+        "data": response
     })))
 }
 
@@ -198,10 +294,12 @@ pub async fn update_transaction(
     .await?
     .ok_or(AppError::NotFound("Transaction".to_string()))?;
 
+    let response = TransactionResponse::from_with_category(transaction, &state.db).await?;
+
     Ok(Json(json!({
         "success": true,
         "message": "Transaksi berhasil diupdate!",
-        "data": TransactionResponse::from(transaction)
+        "data": response
     })))
 }
 

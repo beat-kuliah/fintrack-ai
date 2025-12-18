@@ -32,8 +32,7 @@ export default function HomePage() {
               </span>
             </Link>
 
-            <div className="flex items-center gap-2 sm:gap-4">
-              <ThemeToggle />
+            <div className="flex items-center gap-2 sm:gap-4 ml-auto">
               <Link
                 href="/login"
                 className="hidden sm:block px-4 py-2 text-light-600 dark:text-dark-300 hover:text-light-900 dark:hover:text-dark-100 font-medium transition-colors"
@@ -47,6 +46,7 @@ export default function HomePage() {
                 <span className="hidden sm:inline">Daftar Gratis</span>
                 <span className="sm:hidden">Daftar</span>
               </Link>
+              <ThemeToggle />
             </div>
           </div>
         </div>

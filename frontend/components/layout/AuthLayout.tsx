@@ -13,7 +13,27 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children, title, subtitle, type }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-white dark:bg-dark-950 bg-mesh noise flex transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-dark-950 bg-mesh noise flex flex-col lg:flex-row transition-colors duration-300">
+      {/* Theme Toggle - Fixed top right */}
+      <div className="fixed top-3 right-3 sm:top-4 sm:right-4 lg:top-6 lg:right-6 xl:top-8 xl:right-8 z-50">
+        <ThemeToggle />
+      </div>
+      
+      {/* Mobile Header - Fixed at top */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 glass border-b border-light-200 dark:border-dark-800 px-4 py-3 h-14">
+        <div className="flex items-center w-full h-full">
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/30">
+              <Wallet className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-lg font-bold font-display whitespace-nowrap">
+              <span className="text-gradient">Fin</span>
+              <span className="text-light-800 dark:text-dark-100">Track</span>
+            </span>
+          </Link>
+        </div>
+      </div>
+
       {/* Left Side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col justify-between p-8 xl:p-12 relative overflow-hidden">
         {/* Animated Background Elements */}
@@ -24,7 +44,7 @@ export default function AuthLayout({ children, title, subtitle, type }: AuthLayo
         </div>
 
         {/* Logo */}
-        <div className="relative z-10 flex items-center justify-between">
+        <div className="relative z-10 flex items-center">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 xl:w-12 xl:h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/30 group-hover:shadow-xl group-hover:shadow-primary-500/40 transition-all duration-300">
               <Wallet className="w-5 h-5 xl:w-6 xl:h-6 text-white" />
@@ -34,7 +54,6 @@ export default function AuthLayout({ children, title, subtitle, type }: AuthLayo
               <span className="text-light-800 dark:text-dark-100">Track</span>
             </span>
           </Link>
-          <ThemeToggle />
         </div>
 
         {/* Main Content */}
@@ -81,26 +100,13 @@ export default function AuthLayout({ children, title, subtitle, type }: AuthLayo
       </div>
 
       {/* Right Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
-        <div className="w-full max-w-md">
-          {/* Mobile Header - More compact */}
-          <div className="lg:hidden mb-6 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/30">
-                <Wallet className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-lg font-bold font-display">
-                <span className="text-gradient">Fin</span>
-                <span className="text-light-800 dark:text-dark-100">Track</span>
-              </span>
-            </Link>
-            <ThemeToggle />
-          </div>
+      <div className="flex-1 flex flex-col lg:items-center justify-center p-4 sm:p-5 lg:p-8 xl:p-12 w-full pt-20 sm:pt-20 lg:pt-4 pb-4 sm:pb-6 lg:pb-0 min-h-screen lg:min-h-0">
+        <div className="w-full max-w-md xl:max-w-lg mx-auto">
 
           {/* Form Container */}
-          <div className="glass rounded-xl sm:rounded-2xl p-5 sm:p-8 shadow-xl sm:shadow-2xl shadow-black/5 dark:shadow-black/20 animate-fade-in">
-            <div className="text-center mb-6 sm:mb-8">
-              <h2 className="text-xl sm:text-2xl font-bold font-display text-light-900 dark:text-dark-50 mb-1.5 sm:mb-2">
+          <div className="glass rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-xl sm:shadow-2xl shadow-black/5 dark:shadow-black/20 animate-fade-in">
+            <div className="text-center mb-5 sm:mb-6 lg:mb-8">
+              <h2 className="text-xl sm:text-2xl lg:text-2xl font-bold font-display text-light-900 dark:text-dark-50 mb-1.5 sm:mb-2">
                 {title}
               </h2>
               <p className="text-sm sm:text-base text-light-600 dark:text-dark-400">{subtitle}</p>

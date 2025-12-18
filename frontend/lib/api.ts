@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7080';
 
 // Types
 export interface LoginRequest {
@@ -85,9 +85,9 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string> || {}),
     };
 
     if (this.token) {
@@ -136,6 +136,105 @@ class ApiClient {
       method: 'POST',
     });
   }
+
+  // Transaction endpoints
+  async createTransaction(data: {
+    amount: number;
+    description?: string;
+    category?: string;
+    date?: string;
+    type: 'income' | 'expense';
+  }): Promise<{ success: boolean; message: string; data: Transaction }> {
+    return this.request<{ success: boolean; message: string; data: Transaction }>('/api/transactions', {
+      method: 'POST',
+      body: JSON.stringify({
+        amount: data.amount,
+        description: data.description || null,
+        category_name: data.category || null,
+        transaction_type: data.type,
+        date: data.date || null,
+      }),
+    });
+  }
+
+  async getTransactions(params?: {
+    wallet_id?: string;
+    category_id?: string;
+    transaction_type?: string;
+    start_date?: string;
+    end_date?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    success: boolean;
+    data: Transaction[];
+    meta: {
+      total: number;
+      limit: number;
+      offset: number;
+    };
+  }> {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+    const query = queryParams.toString();
+    const url = query ? `/api/transactions?${query}` : '/api/transactions';
+    return this.request(url, {
+      method: 'GET',
+    });
+  }
+
+  async getTransaction(id: string): Promise<{ success: boolean; data: Transaction }> {
+    return this.request<{ success: boolean; data: Transaction }>(`/api/transactions/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async updateTransaction(
+    id: string,
+    data: {
+      amount?: number;
+      description?: string;
+      category?: string;
+      date?: string;
+      type?: 'income' | 'expense';
+    }
+  ): Promise<{ success: boolean; message: string; data: Transaction }> {
+    return this.request<{ success: boolean; message: string; data: Transaction }>(`/api/transactions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        amount: data.amount,
+        description: data.description,
+        category_name: data.category,
+        transaction_type: data.type,
+        date: data.date,
+      }),
+    });
+  }
+
+  async deleteTransaction(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/transactions/${id}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+// Transaction types
+export interface Transaction {
+  id: string;
+  wallet_id: string;
+  category_id?: string;
+  category_name?: string;
+  transaction_type: string;
+  amount: number;
+  description?: string;
+  date: string;
+  created_at: string;
 }
 
 // Export singleton instance

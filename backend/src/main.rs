@@ -1,11 +1,12 @@
 use axum::{
-    routing::{get, post, put, delete},
+    routing::{delete, get, post, put},
     Router,
 };
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
+use tracing::Level;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod config;
@@ -29,7 +30,8 @@ async fn main() {
     // Initialize tracing
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| "fintrack_api=debug,tower_http=debug".into()),
+            std::env::var("RUST_LOG")
+                .unwrap_or_else(|_| "fintrack_api=debug,tower_http=debug".into()),
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -83,29 +85,85 @@ async fn main() {
         .route("/api/wallets/:id", put(handlers::wallet::update_wallet))
         .route("/api/wallets/:id", delete(handlers::wallet::delete_wallet))
         // Transaction routes
-        .route("/api/transactions", get(handlers::transaction::list_transactions))
-        .route("/api/transactions", post(handlers::transaction::create_transaction))
-        .route("/api/transactions/:id", get(handlers::transaction::get_transaction))
-        .route("/api/transactions/:id", put(handlers::transaction::update_transaction))
-        .route("/api/transactions/:id", delete(handlers::transaction::delete_transaction))
+        .route(
+            "/api/transactions",
+            get(handlers::transaction::list_transactions),
+        )
+        .route(
+            "/api/transactions",
+            post(handlers::transaction::create_transaction),
+        )
+        .route(
+            "/api/transactions/:id",
+            get(handlers::transaction::get_transaction),
+        )
+        .route(
+            "/api/transactions/:id",
+            put(handlers::transaction::update_transaction),
+        )
+        .route(
+            "/api/transactions/:id",
+            delete(handlers::transaction::delete_transaction),
+        )
         // Category routes
         .route("/api/categories", get(handlers::category::list_categories))
         .route("/api/categories", post(handlers::category::create_category))
-        .route("/api/categories/:id", delete(handlers::category::delete_category))
+        .route(
+            "/api/categories/:id",
+            delete(handlers::category::delete_category),
+        )
         // Dashboard routes
-        .route("/api/dashboard/summary", get(handlers::dashboard::get_summary))
-        .route("/api/dashboard/monthly", get(handlers::dashboard::get_monthly_stats))
-        .route("/api/dashboard/by-category", get(handlers::dashboard::get_by_category))
-        // Add middleware
-        .layer(TraceLayer::new_for_http())
+        .route(
+            "/api/dashboard/summary",
+            get(handlers::dashboard::get_summary),
+        )
+        .route(
+            "/api/dashboard/monthly",
+            get(handlers::dashboard::get_monthly_stats),
+        )
+        .route(
+            "/api/dashboard/by-category",
+            get(handlers::dashboard::get_by_category),
+        )
+        // Add middleware with request logging
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(|request: &axum::http::Request<_>| {
+                    tracing::span!(
+                        Level::INFO,
+                        "request",
+                        method = %request.method(),
+                        uri = %request.uri(),
+                        version = ?request.version(),
+                    )
+                })
+                .on_request(|_request: &axum::http::Request<_>, _span: &tracing::Span| {
+                    tracing::info!(
+                        "📥 Incoming request: {} {}",
+                        _request.method(),
+                        _request.uri()
+                    );
+                })
+                .on_response(
+                    |_response: &axum::http::Response<_>,
+                     latency: std::time::Duration,
+                     _span: &tracing::Span| {
+                        tracing::info!(
+                            "📤 Response: status={}, latency={:?}ms",
+                            _response.status(),
+                            latency.as_millis()
+                        );
+                    },
+                ),
+        )
         .layer(cors)
         .with_state(state);
 
     // Start server
     let addr = format!("{}:{}", config.host, config.port);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    
+
     tracing::info!("🚀 FinTrack API running on http://{}", addr);
-    
+
     axum::serve(listener, app).await.unwrap();
 }
