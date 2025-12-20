@@ -2,11 +2,21 @@
 /target/
 **/*.rs.bk
 *.pdb
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Cargo
+Cargo.lock  # Uncomment if you don't want to commit lock file
+# Note: Some teams commit Cargo.lock for binaries, others don't
 
 # Environment variables
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
 
 # IDE
 .idea/
@@ -14,15 +24,33 @@
 *.swp
 *.swo
 *~
+.cursor/
 
 # OS
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+Desktop.ini
 
-# Debug
+# Debug and logs
 *.log
+logs/
+*.dSYM/
 
 # Backup files
 *.bak
 *.backup
+*.old
+*.orig
+
+# SQLite databases (if used for testing)
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
 
