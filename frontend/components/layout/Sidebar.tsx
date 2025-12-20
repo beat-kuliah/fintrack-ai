@@ -2,17 +2,20 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  LayoutDashboard, 
-  ArrowLeftRight, 
-  Wallet, 
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  Wallet,
   CreditCard,
-  TrendingUp, 
+  TrendingUp,
   Settings,
   Menu,
-  X
+  X,
+  LogOut,
+  User
 } from 'lucide-react'
 import { useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface NavItem {
   name: string
@@ -53,22 +56,22 @@ const navigation: NavItem[] = [
   },
 ]
 
-export default function Sidebar() {
+interface SidebarProps {
+  isMobileOpen?: boolean
+  setIsMobileOpen?: (open: boolean) => void
+}
+
+export default function Sidebar({ isMobileOpen: externalIsMobileOpen, setIsMobileOpen: externalSetIsMobileOpen }: SidebarProps = {}) {
   const pathname = usePathname()
-  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const { user, logout } = useAuth()
+  const [internalIsMobileOpen, setInternalIsMobileOpen] = useState(false)
+
+  // Use external state if provided, otherwise use internal state
+  const isMobileOpen = externalIsMobileOpen !== undefined ? externalIsMobileOpen : internalIsMobileOpen
+  const setIsMobileOpen = externalSetIsMobileOpen || setInternalIsMobileOpen
 
   return (
     <>
-      {/* Mobile menu button - only show when menu is closed */}
-      {!isMobileOpen && (
-        <button
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg glass border border-light-200 dark:border-dark-800 text-light-700 dark:text-dark-300 hover:bg-light-100/50 dark:hover:bg-white/5 transition-colors"
-          aria-label="Toggle menu"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      )}
 
       {/* Mobile overlay */}
       {isMobileOpen && (
@@ -91,8 +94,8 @@ export default function Sidebar() {
           {/* Logo */}
           <div className="p-4 sm:p-6 border-b border-light-200 dark:border-dark-800">
             <div className="flex items-center justify-between gap-3">
-              <Link 
-                href="/dashboard" 
+              <Link
+                href="/dashboard"
                 className="flex items-center gap-3 group flex-1"
                 onClick={() => setIsMobileOpen(false)}
               >
@@ -131,10 +134,9 @@ export default function Sidebar() {
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300
                     relative group
-                    ${
-                      isActive
-                        ? 'bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm shadow-primary-500/10'
-                        : 'text-light-600 dark:text-dark-400 hover:bg-light-100/50 dark:hover:bg-white/5 hover:text-light-800 dark:hover:text-dark-200 hover:translate-x-1'
+                    ${isActive
+                      ? 'bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm shadow-primary-500/10'
+                      : 'text-light-600 dark:text-dark-400 hover:bg-light-100/50 dark:hover:bg-white/5 hover:text-light-800 dark:hover:text-dark-200 hover:translate-x-1'
                     }
                   `}
                 >
@@ -153,9 +155,39 @@ export default function Sidebar() {
             })}
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-light-200 dark:border-dark-800">
-            <div className="text-xs text-light-500 dark:text-dark-500 text-center">
+          {/* User Profile & Logout */}
+          <div className="p-4 border-t border-light-200 dark:border-dark-800 space-y-2">
+            {/* User Info */}
+            {user && (
+              <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-light-100/50 dark:bg-dark-800/50">
+                <div className="w-8 h-8 rounded-full bg-primary-500/20 dark:bg-primary-500/30 flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-light-800 dark:text-dark-100 truncate">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-light-500 dark:text-dark-500 truncate">
+                    {user.email || user.username}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Logout Button */}
+            <button
+              onClick={() => {
+                setIsMobileOpen(false)
+                logout()
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-light-600 dark:text-dark-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-300 group"
+            >
+              <LogOut className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
+              <span className="flex-1 text-left">Logout</span>
+            </button>
+
+            {/* Copyright */}
+            <div className="text-xs text-light-500 dark:text-dark-500 text-center pt-2">
               © 2024 FinTrack
             </div>
           </div>

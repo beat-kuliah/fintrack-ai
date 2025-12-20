@@ -1,4 +1,5 @@
 // API Configuration
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://172.20.30.142:7080';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7080';
 
 // Types
@@ -220,6 +221,34 @@ class ApiClient {
   async deleteTransaction(id: string): Promise<{ success: boolean; message: string }> {
     return this.request<{ success: boolean; message: string }>(`/api/transactions/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  async getMonthlyStats(): Promise<{
+    success: boolean;
+    data: Array<{
+      month: number;
+      year: number;
+      income: number;
+      expense: number;
+    }>;
+  }> {
+    return this.request('/api/dashboard/monthly', {
+      method: 'GET',
+    });
+  }
+
+  async getExpensesByCategory(): Promise<{
+    success: boolean;
+    data: Array<{
+      name: string;
+      icon?: string;
+      color?: string;
+      total: number;
+    }>;
+  }> {
+    return this.request('/api/dashboard/by-category', {
+      method: 'GET',
     });
   }
 }

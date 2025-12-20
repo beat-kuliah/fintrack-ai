@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 
 interface InputProps {
-  label: string
+  label?: string
   type?: string
   placeholder?: string
   value: string
@@ -33,10 +33,12 @@ export default function Input({
 
   return (
     <div className="w-full">
-      <label className="block text-xs sm:text-sm font-medium text-light-700 dark:text-dark-300 mb-1.5 sm:mb-2">
-        {label}
-        {required && <span className="text-primary-500 ml-1">*</span>}
-      </label>
+      {label && (
+        <label className="block text-xs sm:text-sm font-medium text-light-700 dark:text-dark-300 mb-1.5 sm:mb-2">
+          {label}
+          {required && <span className="text-primary-500 ml-1">*</span>}
+        </label>
+      )}
       <div className="relative">
         {icon && (
           <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-light-500 dark:text-dark-400 [&>svg]:w-4 [&>svg]:h-4 sm:[&>svg]:w-5 sm:[&>svg]:h-5">
