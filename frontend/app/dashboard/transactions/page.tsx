@@ -6,8 +6,10 @@ import AddTransactionModal from '@/components/transactions/AddTransactionModal'
 import EditTransactionModal from '@/components/transactions/EditTransactionModal'
 import { apiClient, Transaction } from '@/lib/api'
 import { ArrowLeftRight, ArrowUpRight, ArrowDownRight, Calendar, Tag, Wallet, Edit, Trash2 } from 'lucide-react'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function TransactionsPage() {
+  const toast = useToast()
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false)
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -49,10 +51,11 @@ export default function TransactionsPage() {
 
     try {
       await apiClient.deleteTransaction(transactionId)
+      toast.success('Transaksi berhasil dihapus! 🗑️')
       fetchTransactions()
     } catch (error: any) {
       console.error('Error deleting transaction:', error)
-      alert(error.message || 'Failed to delete transaction')
+      toast.error(error.message || 'Gagal menghapus transaksi')
     }
   }
 

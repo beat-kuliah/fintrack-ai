@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { ArrowUpRight, ArrowDownRight, Calendar, Tag, ChevronDown } from 'lucide-react'
 import { apiClient, Transaction } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 
 interface EditTransactionModalProps {
   isOpen: boolean
@@ -20,6 +21,7 @@ export default function EditTransactionModal({
   transaction,
   onSuccess,
 }: EditTransactionModalProps) {
+  const toast = useToast()
   const [formData, setFormData] = useState({
     amount: '',
     description: '',
@@ -60,6 +62,7 @@ export default function EditTransactionModal({
         type: formData.type,
       })
 
+      toast.success('Transaksi berhasil diupdate! ✨')
       onClose()
 
       // Call onSuccess callback if provided, otherwise reload page
@@ -70,7 +73,7 @@ export default function EditTransactionModal({
       }
     } catch (error: any) {
       console.error('Error updating transaction:', error)
-      alert(error.message || 'Failed to update transaction')
+      toast.error(error.message || 'Gagal mengupdate transaksi')
     } finally {
       setIsSubmitting(false)
     }

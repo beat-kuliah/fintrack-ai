@@ -8,12 +8,15 @@ use uuid::Uuid;
 
 use crate::{error::AppError, utils::jwt::verify_token, AppState};
 
+// AuthUser and auth_middleware are kept for future use when implementing middleware-based authentication
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct AuthUser {
     pub id: Uuid,
     pub email: String,
 }
 
+#[allow(dead_code)]
 pub async fn auth_middleware(
     State(state): State<AppState>,
     mut request: Request,

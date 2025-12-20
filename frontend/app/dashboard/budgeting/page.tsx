@@ -166,7 +166,7 @@ export default function BudgetingPage() {
             <button
               onClick={() => {
                 // TODO: Open create category modal
-                alert('Create category feature coming soon!')
+                // toast.info('Fitur create category akan segera hadir! 🚀')
               }}
               className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-primary-500/30"
             >

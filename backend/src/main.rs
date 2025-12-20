@@ -51,11 +51,30 @@ async fn main() {
 
     // Run migrations automatically
     tracing::info!("🔄 Running database migrations...");
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .expect("Failed to run migrations");
-    tracing::info!("✅ Migrations completed successfully");
+    
+    match sqlx::migrate!("./migrations").run(&pool).await {
+        Ok(_) => {
+            tracing::info!("✅ Migrations completed successfully");
+        }
+        Err(sqlx::migrate::MigrateError::VersionMissing(version)) => {
+            tracing::error!("❌ Migration error: VersionMissing({})", version);
+            tracing::error!("The database has a migration record for version {} that doesn't match the files.", version);
+            tracing::error!("This usually happens when:");
+            tracing::error!("  1. A migration was applied but the file was later removed or moved");
+            tracing::error!("  2. The database was restored from a backup with different migration state");
+            tracing::error!("");
+            tracing::error!("Solutions:");
+            tracing::error!("  Option 1: Remove the migration record from database:");
+            tracing::error!("    DELETE FROM _sqlx_migrations WHERE version = {};", version);
+            tracing::error!("  Option 2: Restore the missing migration file");
+            tracing::error!("  Option 3: Check migration status: sqlx migrate info");
+            panic!("Failed to run migrations: VersionMissing({})", version);
+        }
+        Err(e) => {
+            tracing::error!("❌ Migration error: {:?}", e);
+            panic!("Failed to run migrations: {}", e);
+        }
+    }
 
     // Create app state
     let state = AppState {

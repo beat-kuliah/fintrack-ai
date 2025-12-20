@@ -6,7 +6,6 @@ use uuid::Uuid;
 
 use crate::models::user::User;
 use crate::models::wallet::Wallet;
-use crate::models::transaction::Transaction;
 use crate::models::category::Category;
 
 // User queries
@@ -65,24 +64,6 @@ pub async fn get_wallet_by_id(pool: &PgPool, id: Uuid, user_id: Uuid) -> Result<
     .bind(id)
     .bind(user_id)
     .fetch_optional(pool)
-    .await
-}
-
-// Transaction queries
-pub async fn get_user_transactions(
-    pool: &PgPool, 
-    user_id: Uuid,
-    limit: i64,
-    offset: i64,
-) -> Result<Vec<Transaction>, sqlx::Error> {
-    sqlx::query_as::<_, Transaction>(
-        r#"SELECT id, user_id, wallet_id, category_id, transaction_type, amount, description, date, created_at, updated_at
-           FROM transactions WHERE user_id = $1 ORDER BY date DESC LIMIT $2 OFFSET $3"#
-    )
-    .bind(user_id)
-    .bind(limit)
-    .bind(offset)
-    .fetch_all(pool)
     .await
 }
 
