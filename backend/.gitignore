@@ -1,5 +1,7 @@
 # Rust build artifacts
-/target/
+# Ignore target directory and all its contents
+target/
+**/target/
 **/*.rs.bk
 *.pdb
 *.exe
