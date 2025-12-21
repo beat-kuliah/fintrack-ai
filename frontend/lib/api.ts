@@ -146,6 +146,7 @@ class ApiClient {
     category?: string;
     date?: string;
     type: 'income' | 'expense';
+    wallet_id?: string;
   }): Promise<{ success: boolean; message: string; data: Transaction }> {
     return this.request<{ success: boolean; message: string; data: Transaction }>('/api/transactions', {
       method: 'POST',
@@ -155,6 +156,7 @@ class ApiClient {
         category_name: data.category || null,
         transaction_type: data.type,
         date: data.date || null,
+        wallet_id: data.wallet_id || null,
       }),
     });
   }
@@ -205,6 +207,7 @@ class ApiClient {
       category?: string;
       date?: string;
       type?: 'income' | 'expense';
+      wallet_id?: string;
     }
   ): Promise<{ success: boolean; message: string; data: Transaction }> {
     return this.request<{ success: boolean; message: string; data: Transaction }>(`/api/transactions/${id}`, {
@@ -215,6 +218,7 @@ class ApiClient {
         category_name: data.category,
         transaction_type: data.type,
         date: data.date,
+        wallet_id: data.wallet_id,
       }),
     });
   }

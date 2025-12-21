@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
-import { ArrowUpRight, ArrowDownRight, Calendar, Tag, ChevronDown } from 'lucide-react'
-import { apiClient, Transaction } from '@/lib/api'
+import { ArrowUpRight, ArrowDownRight, Calendar, Tag, ChevronDown, Wallet } from 'lucide-react'
+import { apiClient, Transaction, Wallet as WalletType } from '@/lib/api'
 import { useToast } from '@/contexts/ToastContext'
 
 interface EditTransactionModalProps {
@@ -28,9 +28,33 @@ export default function EditTransactionModal({
     category: '',
     date: '',
     type: 'expense' as 'income' | 'expense',
+    wallet_id: '',
   })
+  const [wallets, setWallets] = useState<WalletType[]>([])
+  const [isLoadingWallets, setIsLoadingWallets] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
+  const fetchWallets = useCallback(async () => {
+    try {
+      setIsLoadingWallets(true)
+      const response = await apiClient.getWallets()
+      if (response.success) {
+        setWallets(response.data)
+      }
+    } catch (error) {
+      console.error('Error fetching wallets:', error)
+    } finally {
+      setIsLoadingWallets(false)
+    }
+  }, [])
+
+  // Fetch wallets when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchWallets()
+    }
+  }, [isOpen, fetchWallets])
 
   // Load transaction data when modal opens
   useEffect(() => {
@@ -42,6 +66,7 @@ export default function EditTransactionModal({
         category: transaction.category_name || '',
         date: transaction.date,
         type: transaction.transaction_type === 'income' ? 'income' : 'expense',
+        wallet_id: transaction.wallet_id || '',
       })
       setIsLoading(false)
     }
@@ -60,6 +85,7 @@ export default function EditTransactionModal({
         category: formData.category || undefined,
         date: formData.date,
         type: formData.type,
+        wallet_id: formData.wallet_id || undefined,
       })
 
       toast.success('Transaksi berhasil diupdate! ✨')
@@ -105,6 +131,44 @@ export default function EditTransactionModal({
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Wallet Selection */}
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-light-700 dark:text-dark-300 mb-1.5 sm:mb-2">
+              Wallet
+              <span className="text-primary-500 ml-1">*</span>
+            </label>
+            <div className="relative">
+              <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-light-500 dark:text-dark-400 z-10">
+                <Wallet className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              {isLoadingWallets ? (
+                <div className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3.5 text-sm sm:text-base bg-light-100 dark:bg-dark-800/50 border border-light-300 dark:border-dark-700 rounded-lg sm:rounded-xl text-light-500 dark:text-dark-400">
+                  Loading wallets...
+                </div>
+              ) : (
+                <>
+                  <select
+                    name="wallet_id"
+                    value={formData.wallet_id}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3.5 text-sm sm:text-base bg-light-100 dark:bg-dark-800/50 border border-light-300 dark:border-dark-700 rounded-lg sm:rounded-xl text-light-900 dark:text-dark-50 transition-all duration-300 focus:outline-none focus:border-primary-400 dark:focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20 focus:bg-white dark:focus:bg-dark-800 hover:border-light-400 dark:hover:border-dark-600 appearance-none cursor-pointer"
+                  >
+                    <option value="">Select wallet</option>
+                    {wallets.map((wallet) => (
+                      <option key={wallet.id} value={wallet.id}>
+                        {wallet.icon || '💳'} {wallet.name} {wallet.is_default ? '(Default)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-light-500 dark:text-dark-400 pointer-events-none">
+                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Transaction Type */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-light-700 dark:text-dark-300 mb-1.5 sm:mb-2">

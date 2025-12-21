@@ -271,6 +271,63 @@ pub async fn update_transaction(
 ) -> Result<Json<Value>, AppError> {
     let user_id = get_user_id(&state, &headers).await?;
 
+    // Get old transaction data before update
+    let old_transaction = sqlx::query_as::<_, Transaction>(
+        r#"
+        SELECT id, user_id, wallet_id, category_id, transaction_type, amount, description, date, created_at, updated_at
+        FROM transactions WHERE id = $1 AND user_id = $2
+        "#
+    )
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or(AppError::NotFound("Transaction".to_string()))?;
+
+    // Reverse the old balance change
+    let old_balance_change = if old_transaction.transaction_type == "income" {
+        -old_transaction.amount
+    } else {
+        old_transaction.amount
+    };
+
+    sqlx::query(
+        r#"UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE id = $2 AND user_id = $3"#
+    )
+    .bind(old_balance_change)
+    .bind(old_transaction.wallet_id)
+    .bind(user_id)
+    .execute(&state.db)
+    .await?;
+
+    // Verify new wallet exists and belongs to user (if wallet_id is being changed)
+    if let Some(new_wallet_id) = payload.wallet_id {
+        if new_wallet_id != old_transaction.wallet_id {
+            let wallet_exists: bool = sqlx::query_scalar(
+                r#"SELECT EXISTS(SELECT 1 FROM wallets WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL)"#
+            )
+            .bind(new_wallet_id)
+            .bind(user_id)
+            .fetch_one(&state.db)
+            .await?;
+
+            if !wallet_exists {
+                // Revert the old balance change since we're failing
+                let revert_change = -old_balance_change;
+                sqlx::query(
+                    r#"UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE id = $2 AND user_id = $3"#
+                )
+                .bind(revert_change)
+                .bind(old_transaction.wallet_id)
+                .bind(user_id)
+                .execute(&state.db)
+                .await?;
+                return Err(AppError::NotFound("Wallet".to_string()));
+            }
+        }
+    }
+
+    // Update transaction
     let transaction = sqlx::query_as::<_, Transaction>(
         r#"
         UPDATE transactions SET
@@ -296,6 +353,27 @@ pub async fn update_transaction(
     .fetch_optional(&state.db)
     .await?
     .ok_or(AppError::NotFound("Transaction".to_string()))?;
+
+    // Use the actual updated transaction values for balance calculation
+    let final_wallet_id = transaction.wallet_id;
+    let final_transaction_type = &transaction.transaction_type;
+    let final_amount = transaction.amount;
+
+    // Apply new balance change to the actual wallet from updated transaction
+    let new_balance_change = if final_transaction_type == "income" {
+        final_amount
+    } else {
+        -final_amount
+    };
+
+    sqlx::query(
+        r#"UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE id = $2 AND user_id = $3"#
+    )
+    .bind(new_balance_change)
+    .bind(final_wallet_id)
+    .bind(user_id)
+    .execute(&state.db)
+    .await?;
 
     let response = TransactionResponse::from_with_category(transaction, &state.db).await?;
 
