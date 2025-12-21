@@ -8,16 +8,17 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { apiClient } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function LoginPage() {
   const router = useRouter()
   const { isAuthenticated, loading: authLoading, login } = useAuth()
+  const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     username_or_email: '',
     password: '',
   })
-  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -43,26 +44,23 @@ export default function LoginPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }))
-    }
   }
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-    
     if (!formData.username_or_email) {
-      newErrors.username_or_email = 'Username atau email wajib diisi'
+      toast.error('Username atau email wajib diisi')
+      return false
     }
     
     if (!formData.password) {
-      newErrors.password = 'Password wajib diisi'
+      toast.error('Password wajib diisi')
+      return false
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password minimal 6 karakter'
+      toast.error('Password minimal 6 karakter')
+      return false
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    return true
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,15 +78,17 @@ export default function LoginPage() {
       // Store token and update auth context
       login(response.token, response.user)
       
+      // Show success toast
+      toast.success('Login berhasil! Selamat datang kembali! 🎉')
+      
       // Redirect to dashboard
       router.push('/dashboard')
       router.refresh()
     } catch (error: any) {
       const errorMessage = error?.message || error?.error || 'Terjadi kesalahan saat login'
-      setErrors({ 
-        username_or_email: errorMessage.includes('username') || errorMessage.includes('email') || errorMessage.includes('Email') || errorMessage.includes('kredensial') || errorMessage.includes('credentials') ? errorMessage : '',
-        password: errorMessage.includes('password') || errorMessage.includes('Password') ? errorMessage : ''
-      })
+      
+      // Show error toast
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -108,7 +108,6 @@ export default function LoginPage() {
           placeholder="username atau email@example.com"
           value={formData.username_or_email}
           onChange={handleChange}
-          error={errors.username_or_email}
           icon={<Mail size={20} />}
           required
         />
@@ -120,7 +119,6 @@ export default function LoginPage() {
           placeholder="Masukkan password lo"
           value={formData.password}
           onChange={handleChange}
-          error={errors.password}
           icon={<Lock size={20} />}
           required
         />

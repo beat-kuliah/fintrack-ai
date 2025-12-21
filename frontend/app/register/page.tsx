@@ -8,10 +8,12 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { apiClient } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function RegisterPage() {
   const router = useRouter()
   const { isAuthenticated, loading: authLoading, login } = useAuth()
+  const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -20,7 +22,6 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
   })
-  const [errors, setErrors] = useState<Record<string, string>>({})
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   useEffect(() => {
@@ -32,9 +33,6 @@ export default function RegisterPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }))
-    }
   }
 
   const passwordRequirements = [
@@ -44,52 +42,64 @@ export default function RegisterPage() {
   ]
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-
     if (!formData.name) {
-      newErrors.name = 'Nama wajib diisi'
+      toast.error('Nama wajib diisi')
+      return false
     } else if (formData.name.length < 2) {
-      newErrors.name = 'Nama minimal 2 karakter'
+      toast.error('Nama minimal 2 karakter')
+      return false
     }
 
     if (!formData.username) {
-      newErrors.username = 'Username wajib diisi'
+      toast.error('Username wajib diisi')
+      return false
     } else if (formData.username.length < 3) {
-      newErrors.username = 'Username minimal 3 karakter'
+      toast.error('Username minimal 3 karakter')
+      return false
     } else if (formData.username.length > 30) {
-      newErrors.username = 'Username maksimal 30 karakter'
+      toast.error('Username maksimal 30 karakter')
+      return false
     } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      newErrors.username = 'Username hanya boleh mengandung huruf, angka, dan underscore'
+      toast.error('Username hanya boleh mengandung huruf, angka, dan underscore')
+      return false
     }
 
     if (!formData.email) {
-      newErrors.email = 'Email wajib diisi'
+      toast.error('Email wajib diisi')
+      return false
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Format email tidak valid'
+      toast.error('Format email tidak valid')
+      return false
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password wajib diisi'
+      toast.error('Password wajib diisi')
+      return false
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password minimal 8 karakter'
+      toast.error('Password minimal 8 karakter')
+      return false
     } else if (!/[A-Z]/.test(formData.password)) {
-      newErrors.password = 'Password harus mengandung huruf besar'
+      toast.error('Password harus mengandung huruf besar')
+      return false
     } else if (!/[0-9]/.test(formData.password)) {
-      newErrors.password = 'Password harus mengandung angka'
+      toast.error('Password harus mengandung angka')
+      return false
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Konfirmasi password wajib diisi'
+      toast.error('Konfirmasi password wajib diisi')
+      return false
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Password tidak cocok'
+      toast.error('Password tidak cocok')
+      return false
     }
 
     if (!agreedToTerms) {
-      newErrors.terms = 'Kamu harus setuju dengan syarat & ketentuan'
+      toast.error('Kamu harus setuju dengan syarat & ketentuan')
+      return false
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    return true
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,22 +119,17 @@ export default function RegisterPage() {
       // Store token and update auth context
       login(response.token, response.user)
       
+      // Show success toast
+      toast.success('Registrasi berhasil! Selamat bergabung! 🎉')
+      
       // Redirect to dashboard
       router.push('/dashboard')
       router.refresh()
     } catch (error: any) {
       const errorMessage = error?.message || error?.error || 'Terjadi kesalahan saat registrasi'
       
-      // Set appropriate field error
-      if (errorMessage.includes('username') || errorMessage.includes('Username') || errorMessage.includes('digunakan')) {
-        setErrors({ username: errorMessage })
-      } else if (errorMessage.includes('email') || errorMessage.includes('Email') || errorMessage.includes('terdaftar')) {
-        setErrors({ email: errorMessage })
-      } else if (errorMessage.includes('password') || errorMessage.includes('Password')) {
-        setErrors({ password: errorMessage })
-      } else {
-        setErrors({ email: errorMessage })
-      }
+      // Show error toast
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -144,7 +149,6 @@ export default function RegisterPage() {
           placeholder="Nama lo siapa?"
           value={formData.name}
           onChange={handleChange}
-          error={errors.name}
           icon={<User size={20} />}
           required
         />
@@ -156,7 +160,6 @@ export default function RegisterPage() {
           placeholder="username_lo"
           value={formData.username}
           onChange={handleChange}
-          error={errors.username}
           icon={<User size={20} />}
           required
         />
@@ -168,7 +171,6 @@ export default function RegisterPage() {
           placeholder="email@example.com"
           value={formData.email}
           onChange={handleChange}
-          error={errors.email}
           icon={<Mail size={20} />}
           required
         />
@@ -181,7 +183,6 @@ export default function RegisterPage() {
             placeholder="Buat password yang kuat"
             value={formData.password}
             onChange={handleChange}
-            error={errors.password}
             icon={<Lock size={20} />}
             required
           />
@@ -215,7 +216,6 @@ export default function RegisterPage() {
           placeholder="Ulangi password lo"
           value={formData.confirmPassword}
           onChange={handleChange}
-          error={errors.confirmPassword}
           icon={<Lock size={20} />}
           required
         />
@@ -228,9 +228,6 @@ export default function RegisterPage() {
               checked={agreedToTerms}
               onChange={(e) => {
                 setAgreedToTerms(e.target.checked)
-                if (errors.terms) {
-                  setErrors(prev => ({ ...prev, terms: '' }))
-                }
               }}
               className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 rounded border-light-400 dark:border-dark-600 bg-light-100 dark:bg-dark-800 text-primary-500 focus:ring-primary-500 focus:ring-offset-0 cursor-pointer"
             />
@@ -246,9 +243,6 @@ export default function RegisterPage() {
               FinTrack
             </span>
           </label>
-          {errors.terms && (
-            <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-red-500 dark:text-red-400 animate-slide-down">{errors.terms}</p>
-          )}
         </div>
 
         <Button
