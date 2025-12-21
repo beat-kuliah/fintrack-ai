@@ -155,7 +155,7 @@ async fn create_default_categories(pool: &sqlx::PgPool, user_id: Uuid) -> Result
 
 async fn create_default_wallet(pool: &sqlx::PgPool, user_id: Uuid) -> Result<(), sqlx::Error> {
     sqlx::query(
-        r#"INSERT INTO wallets (id, user_id, name, wallet_type, balance, icon, color) VALUES ($1, $2, $3, $4, $5, $6, $7)"#
+        r#"INSERT INTO wallets (id, user_id, name, wallet_type, balance, icon, color, is_default) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#
     )
     .bind(Uuid::new_v4())
     .bind(user_id)
@@ -164,6 +164,7 @@ async fn create_default_wallet(pool: &sqlx::PgPool, user_id: Uuid) -> Result<(),
     .bind(0.0_f64)
     .bind("💵")
     .bind("#22c55e")
+    .bind(true) // Set as default wallet
     .execute(pool)
     .await?;
 

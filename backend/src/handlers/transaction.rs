@@ -117,9 +117,9 @@ pub async fn create_transaction(
         }
         w_id
     } else {
-        // Get or create default wallet (exclude deleted)
+        // Get default wallet (exclude deleted)
         let default_wallet: Option<Uuid> = sqlx::query_scalar(
-            r#"SELECT id FROM wallets WHERE user_id = $1 AND name = 'Default Wallet' AND deleted_at IS NULL LIMIT 1"#
+            r#"SELECT id FROM wallets WHERE user_id = $1 AND is_default = true AND deleted_at IS NULL LIMIT 1"#
         )
         .bind(user_id)
         .fetch_optional(&state.db)
@@ -128,16 +128,19 @@ pub async fn create_transaction(
         if let Some(w_id) = default_wallet {
             w_id
         } else {
-            // Create default wallet
+            // No default wallet found: create cash wallet as default
             let new_wallet_id = Uuid::new_v4();
             sqlx::query(
-                r#"INSERT INTO wallets (id, user_id, name, wallet_type, balance) VALUES ($1, $2, $3, $4, $5)"#
+                r#"INSERT INTO wallets (id, user_id, name, wallet_type, balance, icon, color, is_default) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#
             )
             .bind(new_wallet_id)
             .bind(user_id)
-            .bind("Default Wallet")
+            .bind("Cash")
             .bind("cash")
             .bind(0.0)
+            .bind("💵")
+            .bind("#22c55e")
+            .bind(true)
             .execute(&state.db)
             .await?;
             new_wallet_id

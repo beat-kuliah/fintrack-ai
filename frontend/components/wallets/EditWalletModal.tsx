@@ -50,6 +50,7 @@ export default function EditWalletModal({
     icon: '💵',
     color: '#22c55e',
     credit_limit: '',
+    is_default: false,
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -61,6 +62,7 @@ export default function EditWalletModal({
         icon: wallet.icon || '💵',
         color: wallet.color || '#22c55e',
         credit_limit: wallet.credit_limit?.toString() || '',
+        is_default: wallet.is_default || false,
       })
     }
   }, [wallet])
@@ -80,6 +82,7 @@ export default function EditWalletModal({
         icon: formData.icon,
         color: formData.color,
         credit_limit: formData.credit_limit ? parseFloat(formData.credit_limit) : undefined,
+        is_default: formData.is_default,
       })
 
 
@@ -246,6 +249,25 @@ export default function EditWalletModal({
               />
             ))}
           </div>
+        </div>
+
+        {/* Set as Default */}
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-light-100 dark:bg-dark-800/50 border border-light-300 dark:border-dark-700">
+          <input
+            type="checkbox"
+            id="is_default"
+            checked={formData.is_default}
+            onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
+            className="w-4 h-4 rounded border-light-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500 focus:ring-2"
+          />
+          <label htmlFor="is_default" className="flex-1 cursor-pointer">
+            <div className="text-sm font-medium text-light-800 dark:text-dark-100">
+              Set as Default Wallet
+            </div>
+            <div className="text-xs text-light-500 dark:text-dark-500 mt-0.5">
+              Wallet ini akan digunakan secara otomatis saat membuat transaksi tanpa memilih wallet
+            </div>
+          </label>
         </div>
 
         {/* Actions */}

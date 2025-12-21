@@ -14,6 +14,7 @@ pub struct Wallet {
     pub icon: Option<String>,
     pub color: Option<String>,
     pub credit_limit: Option<f64>,
+    pub is_default: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
@@ -29,6 +30,7 @@ pub struct CreateWalletRequest {
     pub icon: Option<String>,
     pub color: Option<String>,
     pub credit_limit: Option<f64>,
+    pub is_default: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Validate)]
@@ -39,6 +41,7 @@ pub struct UpdateWalletRequest {
     pub icon: Option<String>,
     pub color: Option<String>,
     pub credit_limit: Option<f64>,
+    pub is_default: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]
@@ -50,6 +53,7 @@ pub struct WalletResponse {
     pub icon: Option<String>,
     pub color: Option<String>,
     pub credit_limit: Option<f64>,
+    pub is_default: bool,
     pub created_at: DateTime<Utc>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deleted_at: Option<DateTime<Utc>>,
@@ -65,6 +69,7 @@ impl From<Wallet> for WalletResponse {
             icon: wallet.icon,
             color: wallet.color,
             credit_limit: wallet.credit_limit,
+            is_default: wallet.is_default,
             created_at: wallet.created_at,
             deleted_at: wallet.deleted_at,
         }

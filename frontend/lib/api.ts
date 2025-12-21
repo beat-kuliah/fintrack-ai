@@ -270,6 +270,7 @@ class ApiClient {
     icon?: string;
     color?: string;
     credit_limit?: number;
+    is_default?: boolean;
   }): Promise<{ success: boolean; message: string; data: Wallet }> {
     return this.request<{ success: boolean; message: string; data: Wallet }>('/api/wallets', {
       method: 'POST',
@@ -286,6 +287,7 @@ class ApiClient {
       icon?: string;
       color?: string;
       credit_limit?: number;
+      is_default?: boolean;
     }
   ): Promise<{ success: boolean; message: string; data: Wallet }> {
     return this.request<{ success: boolean; message: string; data: Wallet }>(`/api/wallets/${id}`, {
@@ -323,6 +325,7 @@ export interface Wallet {
   icon?: string;
   color?: string;
   credit_limit?: number;
+  is_default: boolean;
   created_at: string;
 }
 

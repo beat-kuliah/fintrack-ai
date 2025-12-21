@@ -187,9 +187,16 @@ export default function WalletsPage() {
                         {wallet.icon || '💳'}
                       </div>
                       <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-light-800 dark:text-dark-100">
-                          {wallet.name}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base sm:text-lg font-semibold text-light-800 dark:text-dark-100">
+                            {wallet.name}
+                          </h3>
+                          {wallet.is_default && (
+                            <span className="px-2 py-0.5 text-xs font-medium bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-full">
+                              Default
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-light-500 dark:text-dark-500">
                           {getWalletTypeLabel(wallet.wallet_type)}
                         </p>

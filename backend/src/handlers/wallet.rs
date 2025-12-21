@@ -55,30 +55,70 @@ pub async fn create_wallet(
         AppError::ValidationError(e.to_string())
     })?;
 
+    // Check if user has any wallets
+    let wallet_count: (i64,) = sqlx::query_as(
+        r#"SELECT COUNT(*) FROM wallets WHERE user_id = $1 AND deleted_at IS NULL"#
+    )
+    .bind(user_id)
+    .fetch_one(&state.db)
+    .await?;
+
     let wallet_id = Uuid::new_v4();
     let balance = payload.balance.unwrap_or(0.0);
+    
+    // Determine if this should be default:
+    // 1. If user has no wallets, this is the first wallet -> set as default and force wallet_type = cash
+    // 2. If user explicitly wants this as default -> set as default and unset others
+    // 3. Otherwise -> not default
+    let is_default = if wallet_count.0 == 0 {
+        // First wallet: always default and always cash
+        true
+    } else if payload.is_default.unwrap_or(false) {
+        // User wants this as default: unset other defaults first
+        sqlx::query(
+            r#"UPDATE wallets SET is_default = false, updated_at = NOW() WHERE user_id = $1 AND is_default = true AND deleted_at IS NULL"#
+        )
+        .bind(user_id)
+        .execute(&state.db)
+        .await?;
+        true
+    } else {
+        false
+    };
+
+    // If this is the first wallet, force wallet_type to cash
+    let wallet_type = if wallet_count.0 == 0 {
+        "cash".to_string()
+    } else {
+        payload.wallet_type
+    };
 
     let wallet = sqlx::query_as::<_, Wallet>(
         r#"
-        INSERT INTO wallets (id, user_id, name, wallet_type, balance, icon, color, credit_limit)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING id, user_id, name, wallet_type, balance, icon, color, credit_limit, created_at, updated_at, deleted_at
+        INSERT INTO wallets (id, user_id, name, wallet_type, balance, icon, color, credit_limit, is_default)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, user_id, name, wallet_type, balance, icon, color, credit_limit, is_default, created_at, updated_at, deleted_at
         "#
     )
     .bind(wallet_id)
     .bind(user_id)
     .bind(&payload.name)
-    .bind(&payload.wallet_type)
+    .bind(&wallet_type)
     .bind(balance)
     .bind(&payload.icon)
     .bind(&payload.color)
     .bind(&payload.credit_limit)
+    .bind(is_default)
     .fetch_one(&state.db)
     .await?;
 
     Ok(Json(json!({
         "success": true,
-        "message": "Wallet berhasil dibuat!",
+        "message": if wallet_count.0 == 0 {
+            "Wallet default (cash) berhasil dibuat!"
+        } else {
+            "Wallet berhasil dibuat!"
+        },
         "data": WalletResponse::from(wallet)
     })))
 }
@@ -112,6 +152,17 @@ pub async fn update_wallet(
         .await?
         .ok_or(AppError::NotFound("Wallet".to_string()))?;
 
+    // If setting this wallet as default, unset other defaults first
+    if let Some(true) = payload.is_default {
+        sqlx::query(
+            r#"UPDATE wallets SET is_default = false, updated_at = NOW() WHERE user_id = $1 AND id != $2 AND is_default = true AND deleted_at IS NULL"#
+        )
+        .bind(user_id)
+        .bind(id)
+        .execute(&state.db)
+        .await?;
+    }
+
     // Update wallet - always update icon and color if provided
     // For icon and color, if Some(value) is provided, update; if None, keep existing
     let wallet = sqlx::query_as::<_, Wallet>(
@@ -123,9 +174,10 @@ pub async fn update_wallet(
             icon = COALESCE($4, icon),
             color = COALESCE($5, color),
             credit_limit = COALESCE($6, credit_limit),
+            is_default = COALESCE($7, is_default),
             updated_at = NOW()
-        WHERE id = $7 AND user_id = $8 AND deleted_at IS NULL
-        RETURNING id, user_id, name, wallet_type, balance, icon, color, credit_limit, created_at, updated_at, deleted_at
+        WHERE id = $8 AND user_id = $9 AND deleted_at IS NULL
+        RETURNING id, user_id, name, wallet_type, balance, icon, color, credit_limit, is_default, created_at, updated_at, deleted_at
         "#
     )
     .bind(&payload.name)
@@ -134,6 +186,7 @@ pub async fn update_wallet(
     .bind(&payload.icon)
     .bind(&payload.color)
     .bind(payload.credit_limit)
+    .bind(payload.is_default)
     .bind(id)
     .bind(user_id)
     .fetch_one(&state.db)
