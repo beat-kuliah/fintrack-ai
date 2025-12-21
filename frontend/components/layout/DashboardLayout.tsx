@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Sidebar from './Sidebar'
 import ThemeToggle from '@/components/ui/ThemeToggle'
-import { Wallet, Menu, User } from 'lucide-react'
+import { Wallet, Menu } from 'lucide-react'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -62,18 +62,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="hidden lg:block flex-1" />
 
             <div className="flex items-center gap-2 sm:gap-3 ml-auto lg:ml-0">
-              {/* Welcome message - only show on desktop, hidden on mobile (shown in sidebar) */}
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg glass-light">
-                <div className="w-8 h-8 rounded-full bg-primary-500/20 dark:bg-primary-500/30 flex items-center justify-center">
-                  <User className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-light-600 dark:text-dark-400 leading-tight">Welcome back,</p>
-                  <p className="text-sm font-semibold text-light-800 dark:text-dark-100 leading-tight truncate max-w-[120px]">
-                    {user.name}
-                  </p>
-                </div>
-              </div>
+              {/* User info is shown in sidebar, no need to duplicate in header */}
               <ThemeToggle />
             </div>
           </div>

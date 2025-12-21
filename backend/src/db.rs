@@ -48,8 +48,8 @@ pub async fn find_user_by_id(pool: &PgPool, id: Uuid) -> Result<Option<User>, sq
 // Wallet queries
 pub async fn get_user_wallets(pool: &PgPool, user_id: Uuid) -> Result<Vec<Wallet>, sqlx::Error> {
     sqlx::query_as::<_, Wallet>(
-        r#"SELECT id, user_id, name, wallet_type, balance, icon, color, created_at, updated_at 
-           FROM wallets WHERE user_id = $1 ORDER BY created_at DESC"#
+        r#"SELECT id, user_id, name, wallet_type, balance, icon, color, credit_limit, created_at, updated_at, deleted_at 
+           FROM wallets WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC"#
     )
     .bind(user_id)
     .fetch_all(pool)
@@ -58,8 +58,8 @@ pub async fn get_user_wallets(pool: &PgPool, user_id: Uuid) -> Result<Vec<Wallet
 
 pub async fn get_wallet_by_id(pool: &PgPool, id: Uuid, user_id: Uuid) -> Result<Option<Wallet>, sqlx::Error> {
     sqlx::query_as::<_, Wallet>(
-        r#"SELECT id, user_id, name, wallet_type, balance, icon, color, created_at, updated_at 
-           FROM wallets WHERE id = $1 AND user_id = $2"#
+        r#"SELECT id, user_id, name, wallet_type, balance, icon, color, credit_limit, created_at, updated_at, deleted_at 
+           FROM wallets WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL"#
     )
     .bind(id)
     .bind(user_id)

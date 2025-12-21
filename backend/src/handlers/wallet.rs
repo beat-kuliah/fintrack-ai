@@ -60,9 +60,9 @@ pub async fn create_wallet(
 
     let wallet = sqlx::query_as::<_, Wallet>(
         r#"
-        INSERT INTO wallets (id, user_id, name, wallet_type, balance, icon, color)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id, user_id, name, wallet_type, balance, icon, color, created_at, updated_at
+        INSERT INTO wallets (id, user_id, name, wallet_type, balance, icon, color, credit_limit)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, user_id, name, wallet_type, balance, icon, color, credit_limit, created_at, updated_at, deleted_at
         "#
     )
     .bind(wallet_id)
@@ -72,6 +72,7 @@ pub async fn create_wallet(
     .bind(balance)
     .bind(&payload.icon)
     .bind(&payload.color)
+    .bind(&payload.credit_limit)
     .fetch_one(&state.db)
     .await?;
 
@@ -111,17 +112,20 @@ pub async fn update_wallet(
         .await?
         .ok_or(AppError::NotFound("Wallet".to_string()))?;
 
+    // Update wallet - always update icon and color if provided
+    // For icon and color, if Some(value) is provided, update; if None, keep existing
     let wallet = sqlx::query_as::<_, Wallet>(
         r#"
         UPDATE wallets SET
-            name = COALESCE($1, name),
-            wallet_type = COALESCE($2, wallet_type),
+            name = COALESCE(NULLIF($1, ''), name),
+            wallet_type = COALESCE(NULLIF($2, ''), wallet_type),
             balance = COALESCE($3, balance),
             icon = COALESCE($4, icon),
             color = COALESCE($5, color),
+            credit_limit = COALESCE($6, credit_limit),
             updated_at = NOW()
-        WHERE id = $6 AND user_id = $7
-        RETURNING id, user_id, name, wallet_type, balance, icon, color, created_at, updated_at
+        WHERE id = $7 AND user_id = $8 AND deleted_at IS NULL
+        RETURNING id, user_id, name, wallet_type, balance, icon, color, credit_limit, created_at, updated_at, deleted_at
         "#
     )
     .bind(&payload.name)
@@ -129,6 +133,7 @@ pub async fn update_wallet(
     .bind(payload.balance)
     .bind(&payload.icon)
     .bind(&payload.color)
+    .bind(payload.credit_limit)
     .bind(id)
     .bind(user_id)
     .fetch_one(&state.db)
@@ -148,8 +153,25 @@ pub async fn delete_wallet(
 ) -> Result<Json<Value>, AppError> {
     let user_id = get_user_id(&state, &headers).await?;
 
+    // Check if wallet exists and is not already deleted
+    let wallet = db::get_wallet_by_id(&state.db, id, user_id).await?;
+    if wallet.is_none() {
+        return Err(AppError::NotFound("Wallet".to_string()));
+    }
+
+    // Check if wallet has transactions
+    let transaction_count: (i64,) = sqlx::query_as(
+        r#"SELECT COUNT(*) FROM transactions WHERE wallet_id = $1 AND user_id = $2"#
+    )
+    .bind(id)
+    .bind(user_id)
+    .fetch_one(&state.db)
+    .await?;
+
+    // Soft delete: set deleted_at timestamp instead of hard delete
+    // This preserves transaction history
     let result = sqlx::query(
-        r#"DELETE FROM wallets WHERE id = $1 AND user_id = $2"#
+        r#"UPDATE wallets SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL"#
     )
     .bind(id)
     .bind(user_id)
@@ -162,6 +184,9 @@ pub async fn delete_wallet(
 
     Ok(Json(json!({
         "success": true,
-        "message": "Wallet berhasil dihapus!"
+        "message": format!(
+            "Wallet berhasil dihapus! {} transaksi tetap tersimpan untuk keperluan laporan.",
+            transaction_count.0
+        )
     })))
 }

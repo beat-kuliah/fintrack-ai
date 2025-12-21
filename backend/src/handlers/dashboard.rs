@@ -42,7 +42,7 @@ pub async fn get_summary(
     let user_id = get_user_id(&state, &headers).await?;
 
     let total_balance: (f64,) = sqlx::query_as(
-        r#"SELECT COALESCE(SUM(balance)::float8, 0) FROM wallets WHERE user_id = $1"#
+        r#"SELECT COALESCE(SUM(balance)::float8, 0) FROM wallets WHERE user_id = $1 AND deleted_at IS NULL"#
     )
     .bind(user_id)
     .fetch_one(&state.db)
@@ -82,7 +82,7 @@ pub async fn get_summary(
     .await?;
 
     let wallet_count: (i64,) = sqlx::query_as(
-        r#"SELECT COUNT(*) FROM wallets WHERE user_id = $1"#
+        r#"SELECT COUNT(*) FROM wallets WHERE user_id = $1 AND deleted_at IS NULL"#
     )
     .bind(user_id)
     .fetch_one(&state.db)

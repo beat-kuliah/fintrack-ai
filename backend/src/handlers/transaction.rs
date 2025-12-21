@@ -103,9 +103,9 @@ pub async fn create_transaction(
 
     // Get or create default wallet if wallet_id is not provided
     let wallet_id = if let Some(w_id) = payload.wallet_id {
-        // Verify wallet belongs to user
+        // Verify wallet belongs to user and is not deleted
         let wallet_exists: bool = sqlx::query_scalar(
-            r#"SELECT EXISTS(SELECT 1 FROM wallets WHERE id = $1 AND user_id = $2)"#
+            r#"SELECT EXISTS(SELECT 1 FROM wallets WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL)"#
         )
         .bind(w_id)
         .bind(user_id)
@@ -117,9 +117,9 @@ pub async fn create_transaction(
         }
         w_id
     } else {
-        // Get or create default wallet
+        // Get or create default wallet (exclude deleted)
         let default_wallet: Option<Uuid> = sqlx::query_scalar(
-            r#"SELECT id FROM wallets WHERE user_id = $1 AND name = 'Default Wallet' LIMIT 1"#
+            r#"SELECT id FROM wallets WHERE user_id = $1 AND name = 'Default Wallet' AND deleted_at IS NULL LIMIT 1"#
         )
         .bind(user_id)
         .fetch_optional(&state.db)

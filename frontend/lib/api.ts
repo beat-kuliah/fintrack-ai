@@ -1,6 +1,7 @@
 // API Configuration
 // const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://172.20.30.142:7080';
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7080';
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.11:7080';
 
 // Types
 export interface LoginRequest {
@@ -251,6 +252,53 @@ class ApiClient {
       method: 'GET',
     });
   }
+
+  // Wallet endpoints
+  async getWallets(): Promise<{
+    success: boolean;
+    data: Wallet[];
+  }> {
+    return this.request<{ success: boolean; data: Wallet[] }>('/api/wallets', {
+      method: 'GET',
+    });
+  }
+
+  async createWallet(data: {
+    name: string;
+    wallet_type: string;
+    balance?: number;
+    icon?: string;
+    color?: string;
+    credit_limit?: number;
+  }): Promise<{ success: boolean; message: string; data: Wallet }> {
+    return this.request<{ success: boolean; message: string; data: Wallet }>('/api/wallets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateWallet(
+    id: string,
+    data: {
+      name?: string;
+      wallet_type?: string;
+      balance?: number;
+      icon?: string;
+      color?: string;
+      credit_limit?: number;
+    }
+  ): Promise<{ success: boolean; message: string; data: Wallet }> {
+    return this.request<{ success: boolean; message: string; data: Wallet }>(`/api/wallets/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteWallet(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/wallets/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // Transaction types
@@ -263,6 +311,18 @@ export interface Transaction {
   amount: number;
   description?: string;
   date: string;
+  created_at: string;
+}
+
+// Wallet types
+export interface Wallet {
+  id: string;
+  name: string;
+  wallet_type: string;
+  balance: number;
+  icon?: string;
+  color?: string;
+  credit_limit?: number;
   created_at: string;
 }
 
