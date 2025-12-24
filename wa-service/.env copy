@@ -1,0 +1,29 @@
+# Server Configuration
+PORT=3000
+HOST=0.0.0.0
+NODE_ENV=development
+
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=Admin123
+REDIS_DB=0
+
+# JWT Configuration
+JWT_SECRET=your-secret-key-change-in-production
+JWT_EXPIRES_IN=24h
+
+# API Key Configuration
+API_KEY=your-api-key-change-in-production
+
+# Rate Limiting
+RATE_LIMIT_PER_MINUTE=60
+
+# Logging
+LOG_LEVEL=info
+
+# WhatsApp Configuration
+WHATSAPP_AUTH_PATH=./data/auth
+
+# Database (Prisma)
+DATABASE_URL=postgresql://postgres:Admin123@localhost:5432/wa_service?schema=public
