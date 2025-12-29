@@ -12,10 +12,21 @@ pub struct Category {
     pub color: Option<String>,
     pub category_type: String, // income, expense
     pub created_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct CreateCategoryRequest {
+    #[validate(length(min = 1, message = "Nama kategori wajib diisi"))]
+    pub name: String,
+    pub icon: Option<String>,
+    pub color: Option<String>,
+    #[validate(length(min = 1, message = "Tipe kategori wajib diisi"))]
+    pub category_type: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct UpdateCategoryRequest {
     #[validate(length(min = 1, message = "Nama kategori wajib diisi"))]
     pub name: String,
     pub icon: Option<String>,

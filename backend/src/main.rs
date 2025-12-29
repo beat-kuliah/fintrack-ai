@@ -129,7 +129,8 @@ async fn main() {
         .route("/api/categories", post(handlers::category::create_category))
         .route(
             "/api/categories/:id",
-            delete(handlers::category::delete_category),
+            axum::routing::put(handlers::category::update_category)
+                .delete(handlers::category::delete_category),
         )
         // Dashboard routes
         .route(
@@ -144,6 +145,13 @@ async fn main() {
             "/api/dashboard/by-category",
             get(handlers::dashboard::get_by_category),
         )
+        // Budget routes
+        .route("/api/budgets", get(handlers::budget::list_budgets))
+        .route("/api/budgets", post(handlers::budget::create_budget))
+        .route("/api/budgets/copy", post(handlers::budget::copy_budget))
+        .route("/api/budgets/:id", get(handlers::budget::get_budget))
+        .route("/api/budgets/:id", put(handlers::budget::update_budget))
+        .route("/api/budgets/:id", delete(handlers::budget::delete_budget))
         // Add middleware with request logging
         .layer(
             TraceLayer::new_for_http()

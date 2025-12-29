@@ -43,3 +43,6 @@ COMMENT ON COLUMN budgets.category_id IS 'NULL for total monthly budget, UUID fo
 COMMENT ON COLUMN budgets.alert_threshold IS 'Percentage threshold for budget alerts (0-100)';
 
 
+
+
+

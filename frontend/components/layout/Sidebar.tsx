@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   LogOut,
-  User
+  User,
+  Tag
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -38,6 +39,11 @@ const navigation: NavItem[] = [
     name: 'Budgeting',
     href: '/dashboard/budgeting',
     icon: <Wallet className="w-5 h-5" />,
+  },
+  {
+    name: 'Categories',
+    href: '/dashboard/categories',
+    icon: <Tag className="w-5 h-5" />,
   },
   {
     name: 'Wallets',

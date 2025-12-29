@@ -167,7 +167,7 @@ pub async fn get_by_category(
             c.color,
             COALESCE(SUM(t.amount)::float8, 0) as total
         FROM transactions t
-        JOIN categories c ON t.category_id = c.id
+        JOIN categories c ON t.category_id = c.id AND c.deleted_at IS NULL
         WHERE t.user_id = $1 AND t.transaction_type = 'expense' AND t.date >= $2
         GROUP BY c.id, c.name, c.icon, c.color
         ORDER BY total DESC

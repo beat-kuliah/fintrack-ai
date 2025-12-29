@@ -72,7 +72,7 @@ impl TransactionResponse {
     ) -> Result<Self, sqlx::Error> {
         let category_name = if let Some(cat_id) = tx.category_id {
             sqlx::query_scalar::<_, Option<String>>(
-                r#"SELECT name FROM categories WHERE id = $1"#
+                r#"SELECT name FROM categories WHERE id = $1 AND deleted_at IS NULL"#
             )
             .bind(cat_id)
             .fetch_optional(db)

@@ -1,4 +1,5 @@
 use axum::{
+    extract::rejection::JsonRejection,
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
@@ -41,7 +42,7 @@ impl IntoResponse for AppError {
                 (StatusCode::UNAUTHORIZED, "Token sudah expired, silakan login ulang".to_string())
             }
             AppError::ValidationError(msg) => {
-                (StatusCode::BAD_REQUEST, msg)
+                (StatusCode::UNPROCESSABLE_ENTITY, msg)
             }
             AppError::DatabaseError(e) => {
                 tracing::error!("Database error: {:?}", e);
@@ -83,6 +84,27 @@ impl From<jsonwebtoken::errors::Error> for AppError {
 impl From<argon2::password_hash::Error> for AppError {
     fn from(_: argon2::password_hash::Error) -> Self {
         AppError::InternalError("Password hashing error".to_string())
+    }
+}
+
+impl From<JsonRejection> for AppError {
+    fn from(rejection: JsonRejection) -> Self {
+        tracing::error!("JSON deserialization error: {:?}", rejection);
+        let error_msg = match rejection {
+            JsonRejection::JsonDataError(err) => {
+                format!("Invalid JSON data: {}", err)
+            }
+            JsonRejection::JsonSyntaxError(err) => {
+                format!("Invalid JSON syntax: {}", err)
+            }
+            JsonRejection::MissingJsonContentType(_) => {
+                "Missing Content-Type: application/json".to_string()
+            }
+            _ => {
+                format!("JSON parsing error: {}", rejection.body_text())
+            }
+        };
+        AppError::ValidationError(error_msg)
     }
 }
 

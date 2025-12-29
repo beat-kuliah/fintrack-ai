@@ -149,9 +149,9 @@ pub async fn create_transaction(
 
     // Get or create category
     let category_id = if let Some(cat_id) = payload.category_id {
-        // Verify category exists
+        // Verify category exists and is not deleted
         let cat_exists: bool = sqlx::query_scalar(
-            r#"SELECT EXISTS(SELECT 1 FROM categories WHERE id = $1 AND (user_id = $2 OR user_id IS NULL))"#
+            r#"SELECT EXISTS(SELECT 1 FROM categories WHERE id = $1 AND (user_id = $2 OR user_id IS NULL) AND deleted_at IS NULL)"#
         )
         .bind(cat_id)
         .bind(user_id)
@@ -163,9 +163,9 @@ pub async fn create_transaction(
         }
         Some(cat_id)
     } else if let Some(ref cat_name) = payload.category_name {
-        // Find or create category by name
+        // Find or create category by name (only if not deleted)
         let existing_cat: Option<Uuid> = sqlx::query_scalar(
-            r#"SELECT id FROM categories WHERE name = $1 AND category_type = $2 AND (user_id = $3 OR user_id IS NULL) LIMIT 1"#
+            r#"SELECT id FROM categories WHERE name = $1 AND category_type = $2 AND (user_id = $3 OR user_id IS NULL) AND deleted_at IS NULL LIMIT 1"#
         )
         .bind(cat_name)
         .bind(&payload.transaction_type)

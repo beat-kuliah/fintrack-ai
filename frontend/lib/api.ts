@@ -1,7 +1,7 @@
 // API Configuration
 // const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://172.20.30.142:7080';
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7080';
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.11:7080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7080';
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.11:7080';
 
 // Types
 export interface LoginRequest {
@@ -257,6 +257,49 @@ class ApiClient {
     });
   }
 
+  // Category endpoints
+  async getCategories(): Promise<{
+    success: boolean;
+    data: Category[];
+  }> {
+    return this.request<{ success: boolean; data: Category[] }>('/api/categories', {
+      method: 'GET',
+    });
+  }
+
+  async createCategory(data: {
+    name: string;
+    icon?: string;
+    color?: string;
+    category_type: string;
+  }): Promise<{ success: boolean; message: string; data: Category }> {
+    return this.request<{ success: boolean; message: string; data: Category }>('/api/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCategory(
+    id: string,
+    data: {
+      name: string;
+      icon?: string;
+      color?: string;
+      category_type: string;
+    }
+  ): Promise<{ success: boolean; message: string; data: Category }> {
+    return this.request<{ success: boolean; message: string; data: Category }>(`/api/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCategory(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/categories/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Wallet endpoints
   async getWallets(): Promise<{
     success: boolean;
@@ -305,6 +348,121 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Budget endpoints
+  async getBudgets(params?: {
+    month?: number;
+    year?: number;
+  }): Promise<{
+    success: boolean;
+    data: Budget[];
+  }> {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+    const query = queryParams.toString();
+    const url = query ? `/api/budgets?${query}` : '/api/budgets';
+    return this.request<{ success: boolean; data: Budget[] }>(url, {
+      method: 'GET',
+    });
+  }
+
+  async createBudget(data: {
+    category_id?: string;
+    amount: number;
+    month: number;
+    year: number;
+    is_active?: boolean;
+    alert_threshold?: number;
+  }): Promise<{ success: boolean; message: string; data: Budget }> {
+    // Clean up data: remove category_id if it's empty string or invalid
+    const cleanData: any = {
+      amount: data.amount,
+      month: data.month,
+      year: data.year,
+    };
+    
+    // Only include category_id if it's a valid non-empty UUID string
+    // Don't include it at all if it's empty/undefined/null
+    if (data.category_id && 
+        data.category_id.trim() !== '' && 
+        data.category_id !== 'null' && 
+        data.category_id !== 'undefined' &&
+        data.category_id !== 'None') {
+      // Validate it's a valid UUID format before including
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(data.category_id.trim())) {
+        cleanData.category_id = data.category_id.trim();
+      }
+      // If not valid UUID, just don't include it (will be null in DB)
+    }
+    // If category_id is not provided or invalid, don't include it in the request
+    // Backend will treat missing field as None
+    
+    if (data.is_active !== undefined) {
+      cleanData.is_active = data.is_active;
+    }
+    
+    if (data.alert_threshold !== undefined) {
+      cleanData.alert_threshold = data.alert_threshold;
+    }
+    
+    return this.request<{ success: boolean; message: string; data: Budget }>('/api/budgets', {
+      method: 'POST',
+      body: JSON.stringify(cleanData),
+    });
+  }
+
+  async getBudget(id: string): Promise<{ success: boolean; data: Budget }> {
+    return this.request<{ success: boolean; data: Budget }>(`/api/budgets/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async updateBudget(
+    id: string,
+    data: {
+      category_id?: string | null;
+      amount?: number;
+      month?: number;
+      year?: number;
+      is_active?: boolean;
+      alert_threshold?: number;
+    }
+  ): Promise<{ success: boolean; message: string; data: Budget }> {
+    // Clean category_id: convert empty string to null
+    const cleanedData = {
+      ...data,
+      category_id: data.category_id === '' || data.category_id === undefined ? null : data.category_id,
+    };
+    return this.request<{ success: boolean; message: string; data: Budget }>(`/api/budgets/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(cleanedData),
+    });
+  }
+
+  async deleteBudget(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/budgets/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async copyBudget(data: {
+    source_month: number;
+    source_year: number;
+    target_month: number;
+    target_year: number;
+  }): Promise<{ success: boolean; message: string; data: Budget[] }> {
+    return this.request<{ success: boolean; message: string; data: Budget[] }>('/api/budgets/copy', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 // Transaction types
@@ -331,6 +489,35 @@ export interface Wallet {
   credit_limit?: number;
   is_default: boolean;
   created_at: string;
+}
+
+// Budget types
+export interface Budget {
+  id: string;
+  category_id?: string;
+  category_name?: string;
+  amount: number;
+  month: number;
+  year: number;
+  is_active: boolean;
+  alert_threshold?: number;
+  used_amount?: number;
+  remaining_amount?: number;
+  usage_percentage?: number;
+  is_over_budget?: boolean;
+  should_alert?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Category types
+export interface Category {
+  id: string;
+  name: string;
+  icon?: string;
+  color?: string;
+  category_type: string;
+  is_default: boolean;
 }
 
 // Export singleton instance
